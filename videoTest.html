@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div class="player">
+        <video class="player__video viewer" src="https://player.vimeo.com/external/194837908.sd.mp4?s=c350076905b78c67f74d7ee39fdb4fef01d12420&profile_id=164"></video>
+
+        <div class="player__controls">
+        <div class="progress">
+        <div class="progress__filled"></div>
+        </div>
+        <button class="player__button toggle" title="Toggle Play">►</button>
+        <input type="range" name="volume" class="player__slider" min="0" max="1" step="0.05" value="1">
+        <input type="range" name="playbackRate" class="player__slider" min="0.5" max="2" step="0.1" value="1">
+        <button data-skip="-10" class="player__button">« 10s</button>
+        <button data-skip="25" class="player__button">25s »</button>
+        </div>
+    </div>
+</body>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        background: #7A419B;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #7c1599 0%,#921099 48%,#7e4ae8 100%);
+        background-size: cover;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+<script>
+let selectVideo = document.querySelector('video');
+let playButton = document.querySelector('.toggle');
+let inputItem = document.querySelectorAll('input');
+let skipButton = document.querySelectorAll('.player__button[data-skip]');
+let progressBarOut = document.querySelector('.progress');
+let progressBarIn = document.querySelector('.progress__filled');
+
+//選取影片及按鈕元素並加上監聽事件與執行函示
+playButton.addEventListener('click', playToggle);
+selectVideo.addEventListener('click', playToggle);
+
+function playToggle() {
+    //當影片狀態為暫停的時候
+    if (selectVideo.paused) {
+        //播放影片
+        selectVideo.play();
+        //將播放鈕圖示改為暫停鈕圖示                     
+        playButton.innerHTML = '❚ ❚';
+    //當影片是播放的時候                         
+    } else {
+        //暫停影片
+        selectVideo.pause();
+        //將暫停鈕圖示改為播放鈕圖示     
+        playButton.innerHTML = '►';
+    };
+};
+
+//利用forEach()方法將選到的每個input元素加上監聽事件
+inputItem.forEach(function(item){
+    item.addEventListener('input', changeCondition);
+});
+
+function changeCondition (event) {
+    //取得觸發事件的input元素
+    let changeInput = event.target;
+    //取得input元素的name屬性
+    let conditionName = changeInput.name;
+    //取得input元素的值   
+    let conditionValue = changeInput.value;
+    //將影片屬性值改為input元素的值
+    selectVideo[conditionName] = conditionValue;   
+};
+
+function skipVideo(event) {
+    let changeTime = parseInt(event.target.dataset.skip);
+    selectVideo.currentTime += changeTime;
+};
+
+//將影片加上監聽事件以及觸發函示
+selectVideo.addEventListener('timeupdate', progressing);
+
+function progressing() {
+    //取得影片時間總長度
+    let videoDuration = selectVideo.duration;
+    //取得影片目前時間長度
+    let currentPosition = selectVideo.currentTime;
+    //換算成比例
+    currentProgress = currentPosition / videoDuration * 100;
+    //將算出來的比例加到該元素的CSS屬性上
+    progressBarIn.style.flexBasis = `${currentProgress}%`;
+};
+
+//當滑鼠被按下時，執行addDragProgress函式
+progressBarOut.addEventListener('mousedown', addDragProgress);
+//當滑鼠被放開時，執行removeDragProgress函式
+progressBarOut.addEventListener('mouseup', removeDragProgress);
+
+function addDragProgress (e) {
+    //當函示被執行時，新增監聽mousedown以及mousemove事件
+    progressBarOut.addEventListener('mousedown', dragProgressBar);
+    progressBarOut.addEventListener('mousemove', dragProgressBar);
+};
+
+function removeDragProgress () {
+    //當函示被執行時，移除監聽mousemove事件
+    progressBarOut.removeEventListener('mousemove', dragProgressBar);
+};
+
+function dragProgressBar (e) {
+    //取得影片總長度
+    let videoDuration = selectVideo.duration;
+    //取得按下按鍵時的滑鼠在該元素的X軸座標
+    let mouseX = e.offsetX;
+    //取得時間軸背景元素總長度
+    let progressBarWidth = progressBarOut.offsetWidth;
+    //換算成長度比例
+    let videoProgress = mouseX / progressBarWidth;
+    //換算成影片時間
+    let newPosition = videoDuration * videoProgress;
+    //將計算出來的影片時間指定為目前播放時間
+    selectVideo.currentTime = newPosition;
+};
+
+window.addEventListener('keydown', keyboardFunction);
+
+function keyboardFunction(e) {
+    e.preventDefault();
+
+    if (e.keyCode === 37) {
+        let backButton = document.querySelector('.player__button[data-skip="-10"]');
+        console.log(backButton);
+        backButton.click();
+    };
+    if (e.keyCode === 39) {
+        let nextBotton = document.querySelector('.player__button[data-skip="25"]');
+        console.log(nextBotton);
+        nextBotton.click();
+        
+    };
+    if (e.keyCode === 38 && selectVideo.volume <= 1) {
+        let volumeSlide = document.querySelector('[name = "volume"]');
+        volumeSlide.stepUp();
+        selectVideo.volume = volumeSlide.value;
+        console.log(volumeSlide.value);
+    };
+    if (e.keyCode === 40 && selectVideo.volume > 0) {
+        let volumeSlide = document.querySelector('[name = "volume"]');
+        volumeSlide.stepDown();
+        selectVideo.volume = volumeSlide.value;
+        console.log(volumeSlide.value);
+    };
+    if (e.keyCode === 32) {
+        playToggle();
+    };
+};
+</script>
+
+
+</html>
